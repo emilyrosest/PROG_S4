@@ -1,13 +1,15 @@
+#include <corecrt_math.h>
 #include <stdlib.h>
 #include <vcruntime.h>
 #include <cmath>
+#include <vector>
+#include "glm/fwd.hpp"
 #include "p6/p6.h"
 #define DOCTEST_CONFIG_IMPLEMENT
 #include <chrono>
 #include <random>
-#include "RectangleShape.hpp"
+#include "Boid.hpp"
 #include "doctest/doctest.h"
-
 
 int main(int argc, char* argv[])
 {
@@ -24,31 +26,81 @@ int main(int argc, char* argv[])
     auto ctx = p6::Context{{.title = "Simple-p6-Setup"}};
     ctx.maximize_window();
 
-    float left  = -ctx.aspect_ratio();
-    float right = ctx.aspect_ratio();
-    float top = 1;
+    float left   = -ctx.aspect_ratio();
+    float right  = ctx.aspect_ratio();
+    float top    = 1;
     float bottom = -1;
 
+    size_t boidsNumber = 50;
+    float visualArea = 0.5;
+    float protectedArea = 0.4;
+    float avoidFactor = 0.005;
+
+    float matchingFactor = 0.0005;
+    float centeringFactor = 0.000005;
+
+    
+
+    std::vector<Boid> boids;
+    for (size_t i = 0; i < boidsNumber; i++) {
+        boids.push_back(Boid(glm::vec2(p6::random::number(left, right), p6::random::number(bottom, top)), glm::vec2(p6::random::number(-1, 1) * 0.005f, p6::random::number(bottom, top) * 0.005f)));
+    }
+
+
+    // Boid myRect = Boid(glm::vec2(p6::random::number(left, right), p6::random::number(bottom, top)), glm::vec2(p6::random::number(left, right), p6::random::number(bottom, top)));
+    //Boid myRect = Boid(glm::vec2(p6::random::number(left, right), p6::random::number(bottom, top)), glm::vec2(p6::random::number(-1, 1) * 0.005f, p6::random::number(bottom, top) * 0.005f));
+
+
     // Declare your infinite update loop.
-
-    unsigned                              seed = std::chrono::system_clock::now().time_since_epoch().count();
-    std::mt19937                          generator(seed);
-
-    std::uniform_real_distribution<float> uniformRealDistributionX(left, right);
-    std::uniform_real_distribution<float> uniformRealDistributionY(bottom, top);
-
-
-    RectangleShape myRect = RectangleShape(uniformRealDistributionX(generator), uniformRealDistributionY(generator), uniformRealDistributionX(generator), uniformRealDistributionY(generator));
-
-
     ctx.update = [&]() {
         ctx.background({0.6f, 0.1f, 0.2f});
         ctx.stroke_weight = false;
 
-        ctx.circle(
-            p6::Center{myRect._x_pos, myRect._y_pos},
-            p6::Radius{0.1f}
-        );
+        for (size_t i = 0; i < boidsNumber; i++) {
+            ctx.circle(
+            p6::Center{boids[i]._pos.x, boids[i]._pos.y},
+            p6::Radius{0.05f}
+            );
+
+            glm::vec2 close(0, 0);
+            glm::vec2 averagePos(0, 0);
+            glm::vec2 averageVel(0, 0);
+            int neighboors = 0;
+
+
+            for (size_t j = 0; j < boidsNumber; j++) {
+                if (j != i && boids[i].distanceVec(boids[j]).x < visualArea && boids[i].distanceVec(boids[j]).y < visualArea) {
+                    if (boids[i].distanceNumber(boids[j]) < protectedArea * protectedArea) {
+                        close += boids[i]._pos - boids[j]._pos;
+                    }
+                    else if (boids[i].distanceNumber(boids[j]) < visualArea * visualArea) {
+                        averagePos += boids[j]._pos;
+                        averageVel += boids[j]._vel;
+
+                        neighboors ++;
+                    }
+                }
+                // if (j != i && boids[i].distanceVec(boids[j]).x < protectedArea && boids[i].distanceVec(boids[j]).y < protectedArea) {
+                //     close += boids[i]._pos - boids[j]._pos;
+                // }
+            }
+
+            if (neighboors > 0) {
+                averagePos /= neighboors;
+                averageVel /= neighboors;
+
+                boids[i]._vel = boids[i]._vel + ((averagePos - boids[i]._pos) * centeringFactor) +  ((averageVel - boids[i]._vel) * matchingFactor);
+            }
+
+            boids[i]._vel += close * avoidFactor;
+
+            boids[i].stayInside();
+            //std::cout << boids[i].getSpeed() << std::endl;
+            boids[i].updateSpeed();
+            boids[i].updatePosition();
+        }
+
+
     };
 
     // Should be done last. It starts the infinite loop.
