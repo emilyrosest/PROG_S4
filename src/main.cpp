@@ -10,6 +10,13 @@
 #include <random>
 #include "Boid.hpp"
 #include "doctest/doctest.h"
+#include "Scene.hpp"
+
+
+
+
+
+
 
 int main(int argc, char* argv[])
 {
@@ -26,29 +33,18 @@ int main(int argc, char* argv[])
     auto ctx = p6::Context{{.title = "Simple-p6-Setup"}};
     ctx.maximize_window();
 
-    float left   = -ctx.aspect_ratio();
-    float right  = ctx.aspect_ratio();
-    float top    = 1;
-    float bottom = -1;
+    WindowLimits borders {
+        .top = 1,
+        .bottom = -1,
+        .left = -ctx.aspect_ratio(),
+        .right = ctx.aspect_ratio()
+    };
 
-    size_t boidsNumber = 50;
-    float visualArea = 0.5;
-    float protectedArea = 0.4;
-    float avoidFactor = 0.005;
-
-    float matchingFactor = 0.0005;
-    float centeringFactor = 0.000005;
-
-    
-
-    std::vector<Boid> boids;
-    for (size_t i = 0; i < boidsNumber; i++) {
-        boids.push_back(Boid(glm::vec2(p6::random::number(left, right), p6::random::number(bottom, top)), glm::vec2(p6::random::number(-1, 1) * 0.005f, p6::random::number(bottom, top) * 0.005f)));
-    }
+    Scene scene(borders);
 
 
-    // Boid myRect = Boid(glm::vec2(p6::random::number(left, right), p6::random::number(bottom, top)), glm::vec2(p6::random::number(left, right), p6::random::number(bottom, top)));
-    //Boid myRect = Boid(glm::vec2(p6::random::number(left, right), p6::random::number(bottom, top)), glm::vec2(p6::random::number(-1, 1) * 0.005f, p6::random::number(bottom, top) * 0.005f));
+    std::vector<Boid> boids = scene.initialize(scene._variablesScene.boidsNumber);
+
 
 
     // Declare your infinite update loop.
@@ -56,46 +52,34 @@ int main(int argc, char* argv[])
         ctx.background({0.6f, 0.1f, 0.2f});
         ctx.stroke_weight = false;
 
-        for (size_t i = 0; i < boidsNumber; i++) {
+        for (size_t i = 0; i < scene._variablesScene.boidsNumber; i++) {
             ctx.circle(
             p6::Center{boids[i]._pos.x, boids[i]._pos.y},
-            p6::Radius{0.05f}
+            p6::Radius{0.03f}
             );
 
-            glm::vec2 close(0, 0);
-            glm::vec2 averagePos(0, 0);
-            glm::vec2 averageVel(0, 0);
-            int neighboors = 0;
+            boids[i]._variablesBoid.update();
 
 
-            for (size_t j = 0; j < boidsNumber; j++) {
-                if (j != i && boids[i].distanceVec(boids[j]).x < visualArea && boids[i].distanceVec(boids[j]).y < visualArea) {
-                    if (boids[i].distanceNumber(boids[j]) < protectedArea * protectedArea) {
-                        close += boids[i]._pos - boids[j]._pos;
+
+            for (size_t j = 0; j < scene._variablesScene.boidsNumber; j++) {
+                if (j != i && boids[i].distance(boids[j]).x < scene._variablesScene.visualArea && boids[i].distance(boids[j]).y < scene._variablesScene.visualArea) {
+                    if (boids[i].squaredDistance(boids[j]) < scene._variablesScene.protectedArea * scene._variablesScene.protectedArea) {
+                        boids[i].updateClose(boids[j]);
                     }
-                    else if (boids[i].distanceNumber(boids[j]) < visualArea * visualArea) {
-                        averagePos += boids[j]._pos;
-                        averageVel += boids[j]._vel;
-
-                        neighboors ++;
+                    else if (boids[i].squaredDistance(boids[j]) < scene._variablesScene.visualArea * scene._variablesScene.visualArea) {
+                        boids[i].averageAdd(boids[j]);
+                        boids[i]._variablesBoid._neighboors ++;
                     }
                 }
-                // if (j != i && boids[i].distanceVec(boids[j]).x < protectedArea && boids[i].distanceVec(boids[j]).y < protectedArea) {
-                //     close += boids[i]._pos - boids[j]._pos;
-                // }
             }
-
-            if (neighboors > 0) {
-                averagePos /= neighboors;
-                averageVel /= neighboors;
-
-                boids[i]._vel = boids[i]._vel + ((averagePos - boids[i]._pos) * centeringFactor) +  ((averageVel - boids[i]._vel) * matchingFactor);
+            if (boids[i]._variablesBoid._neighboors > 0) {
+                boids[i].averageDivide();
+                boids[i].addMatchingToVelocity(scene._variablesScene.matchingFactor);
+                boids[i].addCenteringToVelocity(scene._variablesScene.centeringFactor);
             }
-
-            boids[i]._vel += close * avoidFactor;
-
+            boids[i].addAvoidToVelocity(scene._variablesScene.avoidFactor);
             boids[i].stayInside();
-            //std::cout << boids[i].getSpeed() << std::endl;
             boids[i].updateSpeed();
             boids[i].updatePosition();
         }
