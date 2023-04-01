@@ -15,9 +15,9 @@ struct WindowLimits {
     float right{};
 };
 
-struct SimulationParams { // TODO rename ?//////////////
+struct SimulationParams { 
     int boidsNumber = 50;
-    float protectedArea = 0.4f;
+    float protectedArea = 0.3f;
     float visualArea = 0.5f;
     float avoidFactor = 0.005f;
     float turnFactor = 0.001f;
@@ -28,35 +28,16 @@ struct SimulationParams { // TODO rename ?//////////////
 };
 
 
-// struct VariablesLoop {
-//     //glm::vec2 close      = glm::vec2(0, 0);
-//     glm::vec2 _averagePos = glm::vec2(0, 0);
-//     glm::vec2 _averageVel = glm::vec2(0, 0);
-//     int       _neighboors = 0;
-
-//     void update() // TODO remove bc not needed bc wi will recreate an insteance in each function that needs it//////////
-//     {
-//         //close      = glm::vec2(0, 0);
-//         _averagePos = glm::vec2(0, 0);
-//         _averageVel = glm::vec2(0, 0);
-//         _neighboors = 0;
-//     }
-// };
-
 class Boid {
 private:
-    glm::vec2     _pos; // TODO private///////////
-    glm::vec2     _vel; // TODO private///////////
+    glm::vec2     _pos; 
+    glm::vec2     _vel; 
 
 
 public:
-
     Boid(glm::vec2 pos, glm::vec2 vel)
         : _pos(pos), _vel(vel) {};
 
-    
-
-    //VariablesLoop _variablesLoop; // TODO remove///////////
 
     void updatePosition();
 

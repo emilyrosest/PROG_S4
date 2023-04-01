@@ -1,13 +1,7 @@
 #include "BoidCalculs.hpp"
 #include <glm/glm.hpp>
 
-#include <iostream>
 
-
-// glm::vec2 distance(const glm::vec2 boidPos, const glm::vec2 otherBoidPos) // TODO return the usual distance (glm::distance)///////////
-// {
-//     return glm::vec2(abs(boidPos.x - otherBoidPos.x), abs(boidPos.y - otherBoidPos.y));
-// }
 
 float squaredDistance(const glm::vec2 boidPos, const glm::vec2 otherBoidPos)
 {
@@ -34,3 +28,7 @@ float computeSpeed(const glm::vec2 vel)
     return glm::length(vel);
 }
 
+bool isVisible(const glm::vec2 boidPos, const glm::vec2 otherBoidPos, const float& visualArea)
+{
+    return squaredDistance(boidPos, otherBoidPos) < visualArea * visualArea;
+}

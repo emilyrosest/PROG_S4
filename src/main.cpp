@@ -38,7 +38,7 @@ int main(int argc, char* argv[])
     auto ctx = p6::Context{{.title = "Simple-p6-Setup"}};
     ctx.maximize_window();
 
-    WindowLimits borders { // TODO à calculer à chaque frame car aspect_ratio peut changer ///////////
+    WindowLimits borders { 
         .top = 1,
         .bottom = -1,
         .left = -ctx.aspect_ratio(),
@@ -47,8 +47,7 @@ int main(int argc, char* argv[])
 
     SimulationParams simulationParams {};
 
-    std::vector<Boid> boids = createBoids(simulationParams, borders); // TODO rename as create_boids?//////
-
+    std::vector<Boid> boids = createBoids(simulationParams, borders); 
     
 
     // Declare your infinite update loop.
@@ -58,24 +57,9 @@ int main(int argc, char* argv[])
         ctx.background({0.6f, 0.1f, 0.2f});
         ctx.stroke_weight = false;
 
-        
-
         for (Boid& boid : boids) {
             boid.draw(ctx); 
-            boid.move(boids, simulationParams, borders);
-
-            // ctx.circle(
-            // p6::Center{boid._pos},
-            // p6::Radius{0.03f}
-            // );
-
-            // boid.applySeparation(boids, simulationParams); // TODO rename as apply_separation? //////////
-            // boid.applyAlignment(boids, simulationParams);// TODO same//////////
-            // boid.applyCohesion(boids, simulationParams); // TODO same////////////////:
-            
-            // boid.stayInside(borders, simulationParams); // TODO swap params order to make it read nicer///////////
-            // boid.updateSpeed(simulationParams);
-            // boid.updatePosition();         
+            boid.move(boids, simulationParams, borders);        
         }
     };
 
