@@ -17,10 +17,10 @@ struct WindowLimits {
 
 struct SimulationParams { 
     int boidsNumber = 50;
-    float protectedArea = 0.3f;
+    float protectedArea = 0.2f;
     float visualArea = 0.5f;
-    float avoidFactor = 0.005f;
-    float turnFactor = 0.001f;
+    float avoidFactor = 0.002f;
+    float turnFactor = 0.0005f;
     float matchingFactor = 0.0005f;
     float centeringFactor = 0.000005f;
     float maxSpeed = 0.5f;
@@ -46,6 +46,8 @@ public:
     void updateSpeed(const SimulationParams _simulationParams);
 
     void applySeparation(const std::vector<Boid>& boids, const SimulationParams& _simulationParams);
+
+    void computeAverage(const std::vector<Boid>& boids, const SimulationParams& _simulationParams, const float& factor, std::function<glm::vec2(const Boid&)> computeFunction);
 
     void applyAlignment(const std::vector<Boid>& boids, const SimulationParams _simulationParams);
 
