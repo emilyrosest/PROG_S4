@@ -53,42 +53,12 @@ void Boid::applySeparation(const std::vector<Boid>& boids, const SimulationParam
     
     for (const Boid& otherBoid : boids)
     {
-        //if (&otherBoid != this && squaredDistance(_pos, otherBoid._pos) < _simulationParams.protectedArea * _simulationParams.protectedArea)
         if (&otherBoid != this && glm::distance(_pos, otherBoid._pos) < _simulationParams.protectedArea)
         {
             close += _pos - otherBoid._pos;
         }
     }
     _vel += computeAvoidToVelocity(close, _simulationParams.avoidFactor);
-}
-
-void Boid::applyAlignment(const std::vector<Boid>& boids, const SimulationParams _simulationParams)
-{
-    // glm::vec2 averageVel(0, 0);
-    // int       neighboors = 0;
-
-    // // COmpute average velocithy of neighbours
-    // // compute_average([](const Boid& boid) {return boid._vel}); // TODO refactor to make this possible (when we have seen the lesson on std::function)
-    // // compute_average([](const Boid& boid) {return boid._pos}); // TODO refactor to make this possible (when we have seen the lesson on std::function)
-    // for (const Boid& otherBoid : boids)
-    // {
-    //     if (this != &otherBoid && isVisible(_pos, otherBoid._pos, _simulationParams.visualArea)) //if (this != &otherBoid && glm::distance(_pos, otherBoid._pos) < _simulationParams.visualArea)
-    //     { 
-    //         averageVel += otherBoid._vel;
-    //         neighboors++;
-    //     }
-    // }
-    // if (neighboors > 0)
-    // {
-    //     averageVel /= neighboors;
-    //     _vel += computeMatchingToVelocity(_vel, _simulationParams.matchingFactor, averageVel);
-    // }
-    computeAverage(boids, _simulationParams, _simulationParams.matchingFactor, [](const Boid& boid) {return boid._vel;});
-}
-
-void Boid::applyCohesion(const std::vector<Boid>& boids, const SimulationParams _simulationParams)
-{
-    computeAverage(boids, _simulationParams, _simulationParams.centeringFactor, [](const Boid& boid) {return boid._pos;});
 }
 
 void Boid::computeAverage(const std::vector<Boid>& boids, const SimulationParams& _simulationParams, const float& factor, std::function<glm::vec2(const Boid&)> computeFunction) {
@@ -99,15 +69,25 @@ void Boid::computeAverage(const std::vector<Boid>& boids, const SimulationParams
     {
         if (this != &otherBoid && isVisible(_pos, otherBoid._pos, _simulationParams.visualArea))
         {
-            average += computeFunction(otherBoid); //otherBoid._pos ou vel
+            average += computeFunction(otherBoid); 
             neighboors++;
         }
     }
     if (neighboors > 0)
     {
         average /= neighboors;
-        _vel += computeVelocity(computeFunction(*this), factor, average); //boid._pos ou vel
+        _vel += computeVelocity(computeFunction(*this), factor, average); 
     }
+}
+
+void Boid::applyAlignment(const std::vector<Boid>& boids, const SimulationParams _simulationParams)
+{
+    computeAverage(boids, _simulationParams, _simulationParams.matchingFactor, [](const Boid& boid) {return boid._vel;});
+}
+
+void Boid::applyCohesion(const std::vector<Boid>& boids, const SimulationParams _simulationParams)
+{
+    computeAverage(boids, _simulationParams, _simulationParams.centeringFactor, [](const Boid& boid) {return boid._pos;});
 }
 
 void Boid::draw(p6::Context& ctx)
