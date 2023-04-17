@@ -12,82 +12,81 @@ void Boid::updatePosition()
     _pos += _vel;
 }
 
-void Boid::stayInside(const WindowLimits& borders, const SimulationParams _simulationParams)
+void Boid::stayInside(const WindowLimits& borders, const SimulationParams& simulationParams)
 {
     if (_pos.x <= borders.left)
     {
-        _vel.x += _simulationParams.turnFactor;
+        _vel.x += simulationParams.turnFactor;
     }
     if (_pos.x >= borders.right)
     {
-        _vel.x -= _simulationParams.turnFactor;
+        _vel.x -= simulationParams.turnFactor;
     }
     if (_pos.y <= borders.bottom)
     {
-        _vel.y += _simulationParams.turnFactor;
+        _vel.y += simulationParams.turnFactor;
     }
     if (_pos.y >= borders.top)
     {
-        _vel.y -= _simulationParams.turnFactor;
+        _vel.y -= simulationParams.turnFactor;
     }
 }
 
-void Boid::updateSpeed(const SimulationParams _simulationParams)
+void Boid::updateSpeed(const SimulationParams& simulationParams)
 {
-    const float speed = computeSpeed(_vel); 
-    if (speed > _simulationParams.maxSpeed)
+    const float speed = computeSpeed(_vel);
+    if (speed > simulationParams.maxSpeed)
     {
-        // _vel = (_vel / speed) * _simulationParams.maxSpeed; 
-        _vel = glm::normalize(_vel) * _simulationParams.maxSpeed; 
+        _vel = glm::normalize(_vel) * simulationParams.maxSpeed;
     }
-    if (speed < _simulationParams.minSpeed)
+    if (speed < simulationParams.minSpeed)
     {
-        //_vel = (_vel / speed) * _simulationParams.minSpeed;
-        _vel = glm::normalize(_vel) * _simulationParams.minSpeed;
+        _vel = glm::normalize(_vel) * simulationParams.minSpeed;
     }
 }
 
-void Boid::applySeparation(const std::vector<Boid>& boids, const SimulationParams& _simulationParams)
+void Boid::applySeparation(const std::vector<Boid>& boids, const SimulationParams& simulationParams)
 {
     glm::vec2 close(0, 0);
-    
+
     for (const Boid& otherBoid : boids)
     {
-        if (&otherBoid != this && glm::distance(_pos, otherBoid._pos) < _simulationParams.protectedArea)
+        if (&otherBoid != this && glm::distance(_pos, otherBoid._pos) < simulationParams.protectedArea)
         {
             close += _pos - otherBoid._pos;
         }
     }
-    _vel += computeAvoidToVelocity(close, _simulationParams.avoidFactor);
+    _vel += computeAvoidToVelocity(close, simulationParams.avoidFactor);
 }
 
-void Boid::computeAverage(const std::vector<Boid>& boids, const SimulationParams& _simulationParams, const float& factor, std::function<glm::vec2(const Boid&)> computeFunction) {
+void Boid::computeAverage(const std::vector<Boid>& boids, const SimulationParams& simulationParams, const float& factor, std::function<glm::vec2(const Boid&)> computeFunction)
+{
     glm::vec2 average(0, 0);
     int       neighboors = 0;
 
     for (const Boid& otherBoid : boids)
     {
-        if (this != &otherBoid && isVisible(_pos, otherBoid._pos, _simulationParams.visualArea))
+        if (this != &otherBoid && isVisible(_pos, otherBoid._pos, simulationParams.visualArea))
         {
-            average += computeFunction(otherBoid); 
+            average += computeFunction(otherBoid);
             neighboors++;
         }
     }
     if (neighboors > 0)
     {
         average /= neighboors;
-        _vel += computeVelocity(computeFunction(*this), factor, average); 
+        _vel += computeVelocity(computeFunction(*this), factor, average);
     }
 }
 
-void Boid::applyAlignment(const std::vector<Boid>& boids, const SimulationParams _simulationParams)
+void Boid::applyAlignment(const std::vector<Boid>& boids, const SimulationParams& simulationParams)
 {
-    computeAverage(boids, _simulationParams, _simulationParams.matchingFactor, [](const Boid& boid) {return boid._vel;});
+    computeAverage(boids, simulationParams, simulationParams.matchingFactor, [](const Boid& boid) { return boid._vel; });
 }
 
-void Boid::applyCohesion(const std::vector<Boid>& boids, const SimulationParams _simulationParams)
+void Boid::applyCohesion(const std::vector<Boid>& boids, const SimulationParams& simulationParams)
 {
-    computeAverage(boids, _simulationParams, _simulationParams.centeringFactor, [](const Boid& boid) {return boid._pos;});
+    computeAverage(boids, simulationParams, simulationParams.centeringFactor, [](const Boid& boid) { return boid._pos; });
 }
 
 void Boid::draw(p6::Context& ctx)
@@ -98,23 +97,33 @@ void Boid::draw(p6::Context& ctx)
     );
 }
 
-void Boid::move(std::vector<Boid>& boids, SimulationParams& simulationParams, WindowLimits& borders)
+void Boid::move(std::vector<Boid>& boids, const SimulationParams& simulationParams, const WindowLimits& borders, Behaviors& behaviors)
 {
-    applySeparation(boids, simulationParams);
-    applyAlignment(boids, simulationParams);
-    applyCohesion(boids, simulationParams);
+    if (behaviors.separation) {
+        applySeparation(boids, simulationParams);
+    }
+    
+    if (behaviors.allignment) {
+        applyAlignment(boids, simulationParams);
+    }
 
+    if (behaviors.cohesion) {
+        applyCohesion(boids, simulationParams);
+    }
+    
     stayInside(borders, simulationParams);
     updateSpeed(simulationParams);
     updatePosition();
 }
 
-std::vector<Boid> createBoids(SimulationParams simulationParams, WindowLimits _borders)
+std::vector<Boid> createBoids(const SimulationParams& simulationParams, const WindowLimits& borders)
 {
     std::vector<Boid> boids;
-    for (size_t i = 0; i < simulationParams.boidsNumber; i++)
+    boids.reserve(simulationParams.boidsNumber);
+    
+    for (int i = 0; i < simulationParams.boidsNumber; i++)
     {
-        boids.push_back(Boid(glm::vec2(p6::random::number(_borders.left, _borders.right), p6::random::number(_borders.bottom, _borders.top)), glm::vec2(p6::random::number(_borders.left, _borders.right) * simulationParams.minSpeed, p6::random::number(_borders.bottom, _borders.top) * simulationParams.minSpeed)));
+        boids.emplace_back(glm::vec2(p6::random::number(borders.left, borders.right), p6::random::number(borders.bottom, borders.top)), glm::vec2(p6::random::number(borders.left, borders.right) * simulationParams.minSpeed, p6::random::number(borders.bottom, borders.top) * simulationParams.minSpeed));
     }
     return boids;
 }

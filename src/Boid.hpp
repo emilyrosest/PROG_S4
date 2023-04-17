@@ -17,14 +17,20 @@ struct WindowLimits {
 
 struct SimulationParams { 
     int boidsNumber = 50;
-    float protectedArea = 0.2f;
-    float visualArea = 0.5f;
-    float avoidFactor = 0.002f;
+    float protectedArea = 0.3f;
+    float visualArea = 0.7f;
+    float avoidFactor = 0.0005f;
     float turnFactor = 0.0005f;
     float matchingFactor = 0.0005f;
-    float centeringFactor = 0.000005f;
+    float centeringFactor = 0.0005f;
     float maxSpeed = 0.5f;
     float minSpeed = 0.0005f;
+};
+
+struct Behaviors {
+    bool separation = true;
+    bool allignment = true;
+    bool cohesion = true;
 };
 
 
@@ -41,25 +47,25 @@ public:
 
     void updatePosition();
 
-    void stayInside(const WindowLimits& borders, const SimulationParams _simulationParams);
+    void stayInside(const WindowLimits& borders, const SimulationParams& simulationParams);
 
-    void updateSpeed(const SimulationParams _simulationParams);
+    void updateSpeed(const SimulationParams& simulationParams);
 
-    void applySeparation(const std::vector<Boid>& boids, const SimulationParams& _simulationParams);
+    void applySeparation(const std::vector<Boid>& boids, const SimulationParams& simulationParams);
 
-    void computeAverage(const std::vector<Boid>& boids, const SimulationParams& _simulationParams, const float& factor, std::function<glm::vec2(const Boid&)> computeFunction);
+    void computeAverage(const std::vector<Boid>& boids, const SimulationParams& simulationParams, const float& factor, std::function<glm::vec2(const Boid&)> computeFunction);
 
-    void applyAlignment(const std::vector<Boid>& boids, const SimulationParams _simulationParams);
+    void applyAlignment(const std::vector<Boid>& boids, const SimulationParams& simulationParams);
 
-    void applyCohesion(const std::vector<Boid>& boids, const SimulationParams _simulationParams);
+    void applyCohesion(const std::vector<Boid>& boids, const SimulationParams& simulationParams);
 
     void draw(p6::Context& ctx);
 
-    void move(std::vector<Boid>& boids, SimulationParams& simulationParams, WindowLimits& borders);
+    void move(std::vector<Boid>& boids, const SimulationParams& simulationParams, const WindowLimits& borders, Behaviors& behaviors);
 
 };
 
 
-std::vector<Boid> createBoids(SimulationParams simulationParams, WindowLimits _borders);
+std::vector<Boid> createBoids(const SimulationParams& simulationParams, const WindowLimits& borders);
 
 
